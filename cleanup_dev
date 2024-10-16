@@ -1,0 +1,15 @@
+#!/usr/bin/bash
+
+readonly PID_DIR="/tmp/dev_pids"
+
+if [ -d "$PID_DIR" ]; then
+    for pid_file in "$PID_DIR"/*; do
+        if [ -f "$pid_file" ]; then
+            while IFS= read -r pid; do
+                kill "$pid"
+            done < "$pid_file"
+            rm "$pid_file"
+        fi
+    done
+    rmdir "$PID_DIR"
+fi

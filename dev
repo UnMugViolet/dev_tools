@@ -1,0 +1,121 @@
+#!/usr/bin/bash
+
+readonly BROWSER="firefox"
+readonly CODE_EDITOR="code"
+readonly PID_DIR="/tmp/dev_pids"
+
+mkdir -p "$PID_DIR"
+
+declare -A PROJECTS=(
+    ["pangaia"]="/home/paul/Desktop/Developpement/Pangaia/pangaia-server"
+    ["portfolio"]="/home/paul/Desktop/Developpement/Portfolio/portfolio"
+)
+declare -A URLS=(
+    ["pangaia"]="http://pangaia.local/ http://pangaia.local/api/documentation#/ https://framagit.org/gardeners/pangaia-server https://www.figma.com/design/33VqWpR9IdeCFCb0WRM7XM/Pangaia-V2?node-id=27-5694&node-type=frame&t=elOu1U8dn9lWAdIF-0c"
+    ["portfolio"]="http://localhost:5173/office"
+)
+declare -A UP_COMMANDS=(
+    ["pangaia"]="make dev"
+    ["portfolio"]="npm run dev:all"
+)
+declare -A DOWN_COMMANDS=(
+    ["pangaia"]="make down"
+    ["portfolio"]="kill_port 5173"
+)
+declare -A SUDOERS=(
+    ["pangaia"]=true
+    ["portfolio"]=false
+)
+
+declare -A OPEN_SPOTIFY=(
+    ["pangaia"]=false
+    ["portfolio"]=true
+)
+
+usage() {
+    echo "Launch or stop dev projects on the machine."
+    echo "Usage: $0 [project_name] [up|down]"
+    echo "Available projects:"
+    for project in ${!PROJECTS[@]}; do
+        echo "  - $project"
+    done
+    exit 1
+}
+
+if [ $# -ne 2 ]; then
+    usage
+fi
+
+project_name=$1
+action=$2
+
+open_browser() {
+    local urls=("$@")
+    for url in "${urls[@]}"; do
+        $BROWSER "$url" &
+    done
+}
+
+open_spotify() {
+    spotify &
+}
+
+kill_port() {
+    local port=$1
+    local pids=$(lsof -t -i:$port)
+    if [ -n "$pids" ]; then
+        kill $pids
+    else
+        echo "No process found on port $port"
+    fi
+}
+
+launch_project() {
+    local project_path=${PROJECTS[$project_name]}
+    IFS=' ' read -r -a urls <<< "${URLS[$project_name]}"
+    local up_command=${UP_COMMANDS[$project_name]}
+    local down_command=${DOWN_COMMANDS[$project_name]}
+    local is_sudoer=${SUDOERS[$project_name]}
+    local open_spotify=${OPEN_SPOTIFY[$project_name]}
+    local pid_file="$PID_DIR/${project_name}_pid"
+
+    if [ -z "$project_path" ]; then
+        echo "Unknown project: $project_name"
+        exit 1
+    fi
+
+    cd "$project_path" || exit
+
+    case $action in
+        up)
+            if [ "$is_sudoer" = true ]; then
+                echo "Please enter your password to start the service"
+                sudo -v
+            fi
+            $CODE_EDITOR .
+            eval "$up_command &"
+            echo $! > "$pid_file"
+            sleep 4 # Wait for the server to start
+            open_browser "${urls[@]}"
+            if [ "$open_spotify" = true ]; then
+                open_spotify
+            fi
+            ;;
+        down)
+            if [[ "$down_command" == kill_port* ]]; then
+                local port=$(echo "$down_command" | awk '{print $2}')
+                kill_port "$port"
+            else
+                eval "$down_command"
+            fi
+            ;;
+        *)
+            echo "Unknown action: $action"
+            usage
+            ;;
+    esac
+}
+
+trap 'echo "Script interrupted"; exit 1' INT TERM
+
+launch_project
