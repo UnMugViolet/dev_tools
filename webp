@@ -8,12 +8,27 @@ if ! command -v convert &> /dev/null; then
   exit 1
 fi
 
-if [ $# -eq 0 ]; then
-  echo "Usage: $0 <quality>"
-  exit 1
-fi
+# Default quality and delete option
+quality=85
+delete_files=false
 
-quality=$1
+# Parse options
+while getopts "q:d" opt; do
+  case $opt in
+    q)
+      quality=$OPTARG
+      ;;
+    d)
+      delete_files=true
+      ;;
+    *)
+      echo "Usage: $0 [-q quality] [-d]"
+      exit 1
+      ;;
+  esac
+done
+
+shift $((OPTIND -1))
 
 convert_to_webp() {
   local input_file=$1
@@ -32,4 +47,7 @@ export -f convert_to_webp
 find . -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" \) -exec bash -c 'convert_to_webp "$0" '"$quality" {} \;
 
 # Optionally, remove the original files
-# rm -rf ./*.png ./*.jpg ./*.jpeg
+if [ "$delete_files" = true ]; then
+  echo "Deleting all the original files..."
+  find . -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" \) -exec rm -f {} \;
+fi
