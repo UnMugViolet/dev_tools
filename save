@@ -3,10 +3,10 @@
 # Idea -> Could be either copying the entire folder into repo or extracting all the data to the folder 
 
 declare -A SRC=(
-    ["piscine"]="MY PROJECT SOURCE"
+    ["piscine"]="/mnt/nfs/homes/pjaguin/Desktop/Piscine/Piscine"
 )
 declare -A DEST=(
-    ["piscine"]="MY PROJECT DESTINATION"
+    ["piscine"]="/mnt/nfs/homes/pjaguin/Desktop/Perso/42"
 )
 
 usage() {
