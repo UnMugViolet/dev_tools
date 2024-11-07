@@ -1,0 +1,46 @@
+#!/usr/bin/bash
+
+declare -A DEST=(
+    ["piscine"]=""
+    ["piscine_reloaded"]=""
+)
+declare -A SRC=(
+    ["piscine"]=""
+    ["piscine_reloaded"]=""
+)
+
+usage() {
+    echo "Copy paste a project from 42 repo to your private repository without .git"
+    echo "Usage: $0 [project_name]"
+    echo "Available projects:"
+    for project in ${!DEST[@]}; do
+        echo "  - $project"
+    done
+    exit 1
+}
+
+if [ $# -ne 2 ]; then
+    usage
+fi
+
+project_name = $1
+
+copy_project() {
+	local project_path=${DEST[project_name]}
+	local repo_path=${SRC[project_name]}
+
+	if [ -z "$project_path" ]; then
+        echo "Unknown project: $project_name"
+        exit 1
+    fi
+
+	cd "$project_path" || exit
+
+	cp -a "$project_path" "$repo_path"
+
+	sleep 4 # Wait for the copy to be done 
+
+	git add . && git commit -m "`date` autosave $project_name " && git push
+}
+
+copy_project
