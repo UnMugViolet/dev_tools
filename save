@@ -1,16 +1,16 @@
 #!/usr/bin/bash
 
-declare -A DEST=(
-    ["piscine"]=""
-    ["piscine_reloaded"]=""
-)
+# Idea -> Could be either copying the entire folder into repo or extracting all the data to the folder 
+
 declare -A SRC=(
-    ["piscine"]=""
-    ["piscine_reloaded"]=""
+    ["piscine"]="MY PROJECT SOURCE"
+)
+declare -A DEST=(
+    ["piscine"]="MY PROJECT DESTINATION"
 )
 
 usage() {
-    echo "Copy paste a project from 42 repo to your private repository without .git"
+    echo "Copy paste a project from 42 repo to your private repository without the .git"
     echo "Usage: $0 [project_name]"
     echo "Available projects:"
     for project in ${!DEST[@]}; do
@@ -19,15 +19,17 @@ usage() {
     exit 1
 }
 
-if [ $# -ne 2 ]; then
+if [ $# -ne 1 ]; then
     usage
 fi
 
-project_name = $1
+
+project_name=$1
+echo $project_name
 
 copy_project() {
-	local project_path=${DEST[project_name]}
-	local repo_path=${SRC[project_name]}
+	local project_path=${SRC[$project_name]}
+	local repo_path=${DEST[$project_name]}
 
 	if [ -z "$project_path" ]; then
         echo "Unknown project: $project_name"
@@ -36,11 +38,11 @@ copy_project() {
 
 	cd "$project_path" || exit
 
-	cp -a "$project_path" "$repo_path"
+	rsync -av --exclude=".*" "$project_path" "$repo_path" #exclude hidden files
 
-	sleep 4 # Wait for the copy to be done 
+	cd "$repo_path" || exit
 
-	git add . && git commit -m "`date` autosave $project_name " && git push
+	git add . && git commit -m "`date +'%Y-%m-%d %H:%M:%S'` autosave $project_name " && git push
 }
 
 copy_project
