@@ -1,0 +1,18 @@
+#!/usr/bin/zsh
+
+# Check if xdotool is installed
+if ! command -v xdotool &> /dev/null
+then
+    echo "xdotool could not be found. Please install xdotool to use this script."
+    echo "install with:"
+    echo "sudo apt install xdotool"
+    exit 1
+fi
+
+# Infinite while loop to move the cursor left and right
+while true; do
+    xdotool mousemove_relative -- -1 0 
+    sleep 10
+	xdotool mousemove_relative 1 0
+    sleep 10
+done
