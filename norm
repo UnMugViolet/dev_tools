@@ -1,3 +1,22 @@
 #!/usr/bin/bash
-c_formatter_42 < $1 | xsel -i
-xsel -o > $1
+
+# Function to format a single file
+format_file() {
+    c_formatter_42 < "$1" | xsel -i
+    xsel -o > "$1"
+}
+
+# Check for -d option
+if [ "$1" == "-d" ]; then
+    if [ -d "$2" ]; then
+        for file in "$2"/*.{c,h}; do
+            [ -e "$file" ] || continue
+            format_file "$file"
+        done
+    else
+        echo "Directory $2 does not exist."
+        exit 1
+    fi
+else
+    format_file "$1"
+fi
